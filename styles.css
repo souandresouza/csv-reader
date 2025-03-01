@@ -1,0 +1,68 @@
+/* Estilo global */
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #121212; /* Fundo escuro */
+    color: #ffffff; /* Texto claro */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+h1 {
+    color: #ffffff; /* Título em branco */
+    text-align: center;
+}
+
+/* Estilo da tabela */
+table {
+    width: 95%;
+    max-width: 800px; /* Limita a largura máxima da tabela */
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #1e1e1e; /* Fundo escuro para a tabela */
+    color: #ffffff; /* Texto claro na tabela */
+}
+
+table, th, td {
+    border: 1px solid #333; /* Borda escura para melhor contraste */
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #2a2a2a; /* Cabeçalho com tom ligeiramente mais claro */
+    color: #ffffff; /* Texto claro no cabeçalho */
+}
+
+/* Estilo do input de arquivo */
+input[type="file"] {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border: 1px solid #333;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 90%; /* Largura ajustável */
+    max-width: 400px; /* Limita a largura máxima */
+}
+
+input[type="file"]:hover {
+    background-color: #3a3a3a; /* Efeito ao passar o mouse */
+}
+
+/* Mensagem de erro ou aviso */
+#output {
+    color: #ff5252; /* Vermelho suave para mensagens de erro */
+    width: 95%;
+    max-width: 800px; /* Limita a largura máxima */
+    margin: 0 auto;
+    text-align: center;
+}
