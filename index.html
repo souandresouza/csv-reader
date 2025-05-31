@@ -1,17 +1,85 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visualizador de CSV</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
-  <link rel="stylesheet" href="styles.css"> <!-- External stylesheet -->
+  <meta charset="UTF-8" />
+  <title>Leitor de CSV Universal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 10px #0001; }
+    h1 { text-align: center; color: #2c3e50; }
+    input[type="file"] { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; }
+    th { background: #f8f9fa; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .delimiter-info { margin-top: 10px; color: #888; }
+  </style>
 </head>
 <body>
-  <h1>Visualizador de Arquivo CSV</h1>
-  <input type="file" id="csvFileInput" accept=".csv" aria-label="Selecione um arquivo CSV para visualizar" />
-<p id="lineCount" style="font-size: small; color: #ffffff; margin: 10px 0;"></p> <!-- New element for line count -->
-<div id="output" role="alert" aria-live="polite"></div>
-  <script src="script.js"></script> <!-- External script -->
+  <div class="container">
+    <h1>Leitor de CSV Universal</h1>
+    <input type="file" id="csvFile" accept=".csv,text/csv" />
+    <div class="delimiter-info" id="delimiterInfo"></div>
+    <div id="tableContainer"></div>
+  </div>
+  <script>
+    function detectDelimiter(csvText) {
+      const delimiters = [',', ';', '\t', '|', ':'];
+      const firstLine = csvText.split(/\r?\n/)[0];
+      let maxCount = 0, selected = ',';
+      delimiters.forEach(delim => {
+        const count = firstLine.split(delim).length;
+        if (count > maxCount) {
+          maxCount = count;
+          selected = delim;
+        }
+      });
+      return selected;
+    }
+
+    function parseCSV(csvText, delimiter) {
+      const lines = csvText.trim().split(/\r?\n/);
+      const headers = lines[0].split(delimiter).map(h => h.trim());
+      const data = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const values = lines[i].split(delimiter).map(v => v.trim());
+        const obj = {};
+        headers.forEach((h, idx) => obj[h] = values[idx] || '');
+        data.push(obj);
+      }
+      return { headers, data };
+    }
+
+    function renderTable(headers, data) {
+      if (!headers.length) return '';
+      let html = '<table><thead><tr>';
+      headers.forEach(h => html += `<th>${h}</th>`);
+      html += '</tr></thead><tbody>';
+      data.forEach(row => {
+        html += '<tr>';
+        headers.forEach(h => html += `<td>${row[h]}</td>`);
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    document.getElementById('csvFile').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const csvText = e.target.result;
+        const delimiter = detectDelimiter(csvText);
+        document.getElementById('delimiterInfo').textContent =
+          `Delimitador detectado: "${delimiter === '\t' ? 'Tabulação' : delimiter}"`;
+        const { headers, data } = parseCSV(csvText, delimiter);
+        document.getElementById('tableContainer').innerHTML = renderTable(headers, data);
+      };
+      reader.readAsText(file);
+    });
+  </script>
 </body>
 </html>
