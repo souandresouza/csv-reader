@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Leitor de CSV Universal</title>
+  <title>Leitor de CSV (Delimitador: Vírgula)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -86,7 +86,7 @@
       color: var(--text-muted);
     }
     
-    .delimiter-info {
+    .info-box {
       padding: 10px 15px;
       background: #e9ecef;
       border-radius: 6px;
@@ -96,7 +96,7 @@
       text-align: center;
     }
     
-    .delimiter-info strong {
+    .info-box strong {
       color: var(--success-color);
     }
     
@@ -180,7 +180,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>📊 Leitor de CSV Universal</h1>
+    <h1>📊 Leitor de CSV (Delimitador: Vírgula)</h1>
     
     <div class="file-input-container">
       <label for="csvFile" class="file-input-label">
@@ -190,8 +190,8 @@
       <div class="file-name" id="fileName"></div>
     </div>
     
-    <div class="delimiter-info" id="delimiterInfo">
-      Nenhum arquivo selecionado. Formatos suportados: CSV com delimitador , ; | : ou tabulação.
+    <div class="info-box" id="fileInfo">
+      Nenhum arquivo selecionado. O delimitador será sempre vírgula (,).
     </div>
     
     <div id="tableContainer">
@@ -204,43 +204,57 @@
   </div>
 
   <script>
-    function detectDelimiter(csvText) {
-      const delimiters = [',', ';', '\t', '|', ':'];
-      const firstLine = csvText.split(/\r?\n/)[0];
-      let maxCount = 0, selected = ',';
-      
-      delimiters.forEach(delim => {
-        const count = firstLine.split(delim).length;
-        if (count > maxCount) {
-          maxCount = count;
-          selected = delim;
-        }
-      });
-      
-      return selected;
-    }
-
-    function parseCSV(csvText, delimiter) {
+    function parseCSV(csvText) {
       const lines = csvText.trim().split(/\r?\n/);
-      const headers = lines[0].split(delimiter).map(h => h.trim());
+      const delimiter = ','; // Delimitador fixo como vírgula
+      
+      // Função para processar cada linha corretamente, considerando valores entre aspas
+      function splitCSVLine(line) {
+        const result = [];
+        let inQuotes = false;
+        let currentField = '';
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            // Verifica se é uma aspa dentro de um campo (aspas duplas)
+            if (inQuotes && line[i+1] === '"') {
+              currentField += '"';
+              i++; // Pula a próxima aspa
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === delimiter && !inQuotes) {
+            result.push(currentField);
+            currentField = '';
+          } else {
+            currentField += char;
+          }
+        }
+        
+        result.push(currentField);
+        return result;
+      }
+
+      const headers = splitCSVLine(lines[0]).map(h => h.trim());
       const data = [];
       
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
         
-        // Handle cases where values might contain the delimiter (e.g., quoted values)
-        const regex = new RegExp(`(".*?"|[^"${delimiter}\\s]+)(?=\\s*${delimiter}|\\s*$)`, 'g');
-        const values = lines[i].match(regex) || [];
-        
+        const values = splitCSVLine(lines[i]);
         const obj = {};
+        
         headers.forEach((h, idx) => {
           let value = values[idx] || '';
-          // Remove surrounding quotes if present
-          if (typeof value === 'string' && value.startsWith('"') && value.endsWith('"')) {
+          // Remove aspas extras se existirem
+          if (value.startsWith('"') && value.endsWith('"')) {
             value = value.substring(1, value.length - 1);
           }
           obj[h] = value.trim();
         });
+        
         data.push(obj);
       }
       
@@ -281,13 +295,12 @@
       reader.onload = function(e) {
         try {
           const csvText = e.target.result;
-          const delimiter = detectDelimiter(csvText);
           
-          document.getElementById('delimiterInfo').innerHTML = 
-            `Delimitador detectado: <strong>"${delimiter === '\t' ? 'Tabulação' : delimiter}"</strong> | ` +
+          document.getElementById('fileInfo').innerHTML = 
+            `Delimitador: <strong>Vírgula (,)</strong> | ` +
             `Linhas processadas: <strong>${csvText.split(/\r?\n/).length}</strong>`;
             
-          const { headers, data } = parseCSV(csvText, delimiter);
+          const { headers, data } = parseCSV(csvText);
           document.getElementById('tableContainer').innerHTML = renderTable(headers, data);
         } catch (error) {
           document.getElementById('tableContainer').innerHTML = 
