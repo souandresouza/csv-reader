@@ -14,13 +14,13 @@
       --success-color: #4bb543;
       --text-muted: #6c757d;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #f8fafc;
@@ -29,7 +29,7 @@
       color: var(--dark-color);
       line-height: 1.6;
     }
-    
+
     .container {
       max-width: 1000px;
       margin: 20px auto;
@@ -38,20 +38,20 @@
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
-    
+
     h1 {
       text-align: center;
       color: var(--primary-color);
       margin-bottom: 25px;
       font-weight: 600;
     }
-    
+
     .file-input-container {
       position: relative;
       margin-bottom: 25px;
       text-align: center;
     }
-    
+
     .file-input-label {
       display: inline-block;
       padding: 12px 24px;
@@ -63,13 +63,13 @@
       font-weight: 500;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
-    
+
     .file-input-label:hover {
       background: var(--secondary-color);
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
-    
+
     #csvFile {
       position: absolute;
       left: 0;
@@ -79,13 +79,13 @@
       height: 100%;
       cursor: pointer;
     }
-    
+
     .file-name {
       margin-top: 10px;
       font-size: 14px;
       color: var(--text-muted);
     }
-    
+
     .info-box {
       padding: 10px 15px;
       background: #e9ecef;
@@ -95,30 +95,30 @@
       color: var(--dark-color);
       text-align: center;
     }
-    
+
     .info-box strong {
       color: var(--success-color);
     }
-    
+
     #tableContainer {
       overflow-x: auto;
       margin-top: 20px;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    
+
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 600px;
     }
-    
+
     th, td {
       border: 1px solid var(--border-color);
       padding: 12px 15px;
       text-align: left;
     }
-    
+
     th {
       background: var(--primary-color);
       color: white;
@@ -126,51 +126,51 @@
       position: sticky;
       top: 0;
     }
-    
+
     tr:nth-child(even) {
       background: rgba(0, 0, 0, 0.02);
     }
-    
+
     tr:hover {
       background: rgba(0, 0, 0, 0.05);
     }
-    
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
       color: var(--text-muted);
     }
-    
+
     .empty-state i {
       font-size: 48px;
       margin-bottom: 15px;
       color: #adb5bd;
     }
-    
+
     @media (max-width: 768px) {
       .container {
         padding: 20px;
       }
-      
+
       h1 {
         font-size: 24px;
       }
-      
+
       th, td {
         padding: 8px 10px;
         font-size: 14px;
       }
     }
-    
+
     @media (max-width: 480px) {
       body {
         padding: 10px;
       }
-      
+
       .container {
         padding: 15px;
       }
-      
+
       .file-input-label {
         padding: 10px 20px;
         font-size: 14px;
@@ -181,7 +181,7 @@
 <body>
   <div class="container">
     <h1>📊 Leitor de CSV (Delimitador: Vírgula)</h1>
-    
+
     <div class="file-input-container">
       <label for="csvFile" class="file-input-label">
         Selecione um arquivo CSV
@@ -189,11 +189,11 @@
       <input type="file" id="csvFile" accept=".csv,text/csv" />
       <div class="file-name" id="fileName"></div>
     </div>
-    
+
     <div class="info-box" id="fileInfo">
       Nenhum arquivo selecionado. O delimitador será sempre vírgula (,).
     </div>
-    
+
     <div id="tableContainer">
       <div class="empty-state">
         <div>📁</div>
@@ -204,24 +204,33 @@
   </div>
 
   <script>
+    // Corrigida a declaração da função
+    function detectDelimiter(text) {
+      const delimiters = [',', ';', '\t'];
+      const firstLine = text.split('\n')[0];
+
+      const counts = delimiters.map(d => (firstLine.split(d).length - 1));
+      return delimiters[counts.indexOf(Math.max(...counts))] || ',';
+    }
+
     function parseCSV(csvText) {
-      const lines = csvText.trim().split(/\r?\n/);
-      const delimiter = ','; // Delimitador fixo como vírgula
-      
-      // Função para processar cada linha corretamente, considerando valores entre aspas
+      const delimiter = detectDelimiter(csvText);
+
+      document.getElementById('fileInfo').innerHTML =
+        `Delimitador detectado: <strong>${delimiter === '\t' ? 'Tab' : delimiter}</strong>`;
+
       function splitCSVLine(line) {
         const result = [];
         let inQuotes = false;
         let currentField = '';
-        
+
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          
+
           if (char === '"') {
-            // Verifica se é uma aspa dentro de um campo (aspas duplas)
-            if (inQuotes && line[i+1] === '"') {
+            if (inQuotes && line[i + 1] === '"') {
               currentField += '"';
-              i++; // Pula a próxima aspa
+              i++;
             } else {
               inQuotes = !inQuotes;
             }
@@ -232,32 +241,33 @@
             currentField += char;
           }
         }
-        
+
         result.push(currentField);
         return result;
       }
 
-      const headers = splitCSVLine(lines[0]).map(h => h.trim());
+      const allLines = csvText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
+      const headerLine = allLines[0];
+      const dataLines = allLines.slice(1);
+
+      const headers = splitCSVLine(headerLine).map(h => h.trim());
       const data = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        
-        const values = splitCSVLine(lines[i]);
+
+      dataLines.forEach(line => {
+        const values = splitCSVLine(line);
         const obj = {};
-        
+
         headers.forEach((h, idx) => {
           let value = values[idx] || '';
-          // Remove aspas extras se existirem
           if (value.startsWith('"') && value.endsWith('"')) {
             value = value.substring(1, value.length - 1);
           }
           obj[h] = value.trim();
         });
-        
+
         data.push(obj);
-      }
-      
+      });
+
       return { headers, data };
     }
 
@@ -265,11 +275,11 @@
       if (!headers || !headers.length) {
         return '<div class="empty-state"><div>❌</div><h3>Nenhum dado válido encontrado</h3><p>O arquivo pode estar vazio ou mal formatado</p></div>';
       }
-      
+
       let html = '<table><thead><tr>';
       headers.forEach(h => html += `<th>${h}</th>`);
       html += '</tr></thead><tbody>';
-      
+
       if (data.length === 0) {
         html += `<tr><td colspan="${headers.length}" style="text-align: center;">Nenhum registro encontrado</td></tr>`;
       } else {
@@ -279,43 +289,63 @@
           html += '</tr>';
         });
       }
-      
+
       html += '</tbody></table>';
       return html;
     }
 
-    document.getElementById('csvFile').addEventListener('change', function() {
-      const file = this.files[0];
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
       if (!file) return;
-      
-      // Update file name display
+
       document.getElementById('fileName').textContent = `Arquivo selecionado: ${file.name}`;
-      
+
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
           const csvText = e.target.result;
-          
-          document.getElementById('fileInfo').innerHTML = 
-            `Delimitador: <strong>Vírgula (,)</strong> | ` +
-            `Linhas processadas: <strong>${csvText.split(/\r?\n/).length}</strong>`;
-            
           const { headers, data } = parseCSV(csvText);
+
+          document.getElementById('fileInfo').innerHTML +=
+            ` | Linhas válidas: <strong>${data.length + 1}</strong> | ` +
+            `Registros: <strong>${data.length}</strong>`;
+
           document.getElementById('tableContainer').innerHTML = renderTable(headers, data);
         } catch (error) {
-          document.getElementById('tableContainer').innerHTML = 
+          console.error('Erro ao processar CSV:', error);
+          document.getElementById('tableContainer').innerHTML =
             `<div class="empty-state"><div>❌</div><h3>Erro ao processar arquivo</h3><p>${error.message}</p></div>`;
-          console.error(error);
         }
       };
-      
-      reader.onerror = function() {
-        document.getElementById('tableContainer').innerHTML = 
+
+      reader.onerror = function () {
+        document.getElementById('tableContainer').innerHTML =
           `<div class="empty-state"><div>❌</div><h3>Erro ao ler arquivo</h3><p>Não foi possível ler o arquivo selecionado</p></div>`;
       };
-      
+
       reader.readAsText(file);
     });
+
+    // Estilos dinâmicos
+    const style = document.createElement('style');
+    style.textContent = `
+      td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+        font-size: calc(12px + 0.3vw);
+        font-family: 'Segoe UI', sans-serif;
+      }
+
+      @media (max-width: 768px) {
+        td {
+          max-width: 150px;
+          font-size: calc(10px + 0.3vw);
+        }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
